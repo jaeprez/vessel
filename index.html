@@ -1,0 +1,483 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, interactive-widget=resizes-content">
+<meta name="theme-color" content="#000000">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Vessel</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#000; --ink:#ECE9E1; --mute:#87847C; --dim:#403E38; --faint:#1B1A17;
+  --f:'Geist',-apple-system,BlinkMacSystemFont,'Helvetica Neue',system-ui,sans-serif;
+  --sb:env(safe-area-inset-bottom,0px); --st:env(safe-area-inset-top,0px);
+}
+[data-theme="bone"]{ --bg:#EEEBE5; --ink:#141311; --mute:#7A776F; --dim:#BCB8AD; --faint:#DEDACF; }
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:var(--bg)}
+body{color:var(--ink);font-family:var(--f);font-weight:400;-webkit-font-smoothing:antialiased;display:flex;flex-direction:column;height:100dvh;transition:background .4s,color .4s;overscroll-behavior:none}
+button,input,textarea{font:inherit;color:inherit;background:none;border:0;outline:none;-webkit-appearance:none;border-radius:0}
+button{cursor:pointer;-webkit-tap-highlight-color:transparent}
+button:focus-visible,input:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{outline:1px solid var(--mute);outline-offset:4px}
+::selection{background:var(--ink);color:var(--bg)}
+textarea{resize:none}
+input::placeholder,textarea::placeholder{color:var(--dim)}
+
+/* top */
+.top{flex:none;padding:calc(16px + var(--st)) 20px 0;display:flex;justify-content:space-between;align-items:baseline}
+.brand{font-size:14px;font-weight:500;letter-spacing:.01em}
+.brand i{font-style:normal;font-weight:400;color:var(--mute);margin-left:8px}
+.more{color:var(--mute);font-size:18px;line-height:1;letter-spacing:.06em}
+
+/* threads */
+.threads{flex:none;padding:18px 20px 0;display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 16px;max-height:66px;overflow:hidden;line-height:1.25}
+.threads button{color:var(--mute);letter-spacing:-.01em;transition:color .2s}
+.threads button:hover{color:var(--ink)}
+.threads button.all{color:var(--ink);font-weight:500}
+.threads button sup{font-size:.6em;color:var(--dim);margin-left:.25em;vertical-align:super;font-weight:400}
+
+/* surface */
+.surface{flex:1;position:relative;overflow:hidden;min-height:0}
+.n{position:absolute;line-height:1.16;letter-spacing:-.012em;cursor:pointer;-webkit-tap-highlight-color:transparent;overflow-wrap:anywhere;animation:drift var(--dur,20s) ease-in-out var(--del,0s) infinite alternate;transition:opacity .4s;will-change:transform}
+.n.heavy{font-weight:500;letter-spacing:-.02em}
+.n.held::before{content:"";display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--ink);margin:0 .5em 0 0;vertical-align:.32em}
+.n.new{animation:arrive .9s ease both,drift var(--dur,20s) ease-in-out var(--del,0s) infinite alternate}
+.n.bloom{animation:bloom .5s ease both}
+.n.measure{visibility:hidden;left:0;top:0;animation:none}
+@keyframes drift{from{transform:translate(0,0)}to{transform:translate(var(--dx,2px),var(--dy,-3px))}}
+@keyframes arrive{from{opacity:0;transform:translateY(14px)}to{transform:translateY(0)}}
+@keyframes bloom{0%{transform:scale(1)}40%{transform:scale(1.08)}100%{transform:scale(1)}}
+.surface:active .n{}
+.sempty{position:absolute;inset:0;display:grid;place-items:center;color:var(--mute);font-size:18px;letter-spacing:-.01em;text-align:center;padding:20px;line-height:1.4}
+.sempty small{display:block;color:var(--dim);font-size:13px;margin-top:8px}
+.resurface{position:absolute;left:20px;bottom:10px;font-size:12px;color:var(--dim);letter-spacing:.01em;transition:color .2s;z-index:2}
+.resurface:hover{color:var(--mute)}
+
+/* capture */
+.capture{flex:none;padding:8px 20px calc(14px + var(--sb))}
+.capbox{display:flex;align-items:center;gap:14px;border-top:1px solid var(--faint);padding-top:12px;transition:border-color .25s}
+.capbox:focus-within{border-top-color:var(--mute)}
+#cap{flex:1;font-size:18px;letter-spacing:-.012em;line-height:1.3;padding:6px 0;min-width:0}
+.keep{font-size:13px;font-weight:500;color:var(--dim);transition:color .2s;pointer-events:none;padding:6px 0}
+.keep.ready{color:var(--ink);pointer-events:auto}
+
+/* focus card */
+.focus{position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.86);display:none;place-items:center;padding:24px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+[data-theme="bone"] .focus{background:rgba(238,235,229,.9)}
+.focus.on{display:grid;animation:fadein .2s ease both}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+.fc{max-width:560px;width:100%;animation:up .28s cubic-bezier(.2,.7,.2,1) both}
+@keyframes up{from{transform:translateY(10px);opacity:0}to{transform:none;opacity:1}}
+.ft{font-size:clamp(26px,6vw,40px);line-height:1.1;letter-spacing:-.025em;font-weight:400;overflow-wrap:anywhere;white-space:pre-wrap}
+.ft.heavy{font-weight:500}
+.fm{margin-top:16px;font-size:13px;color:var(--mute);display:flex;gap:14px;flex-wrap:wrap}
+.fm b{font-weight:500;color:var(--ink);transition:transform .2s;display:inline-block}
+.fm b.pop{animation:pop .4s ease both}
+@keyframes pop{30%{transform:scale(1.35)}100%{transform:scale(1)}}
+.fa{margin-top:34px;display:flex;align-items:baseline;gap:26px;font-size:14px;color:var(--mute);flex-wrap:wrap}
+.fa .plus{font-size:34px;font-weight:500;letter-spacing:-.03em;color:var(--ink);line-height:1;margin-right:6px}
+.fa button{transition:color .2s}
+.fa button:hover{color:var(--ink)}
+.fa .held{color:var(--ink)}
+
+/* sheets */
+.sheet{position:fixed;inset:0;z-index:50;background:var(--bg);display:none;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+.sheet.on{display:block;animation:fadein .2s ease both}
+.sh{max-width:680px;margin:0 auto;padding:calc(14px + var(--st)) 20px calc(60px + var(--sb))}
+.shbar{display:flex;justify-content:space-between;align-items:baseline;font-size:13px;color:var(--mute);margin-bottom:30px;position:sticky;top:0;background:var(--bg);padding:8px 0 12px;z-index:1}
+.shbar button{color:var(--ink);font-weight:500}
+.shbar .ttl{color:var(--ink);font-weight:500}
+.shbar .ttl i{font-style:normal;color:var(--mute);font-weight:400;margin-left:8px}
+
+/* thread list */
+.lfind{width:100%;font-size:15px;padding:8px 0;border-bottom:1px solid var(--faint);margin-bottom:26px;transition:border-color .2s}
+.lfind:focus{border-bottom-color:var(--mute)}
+.row{display:block;width:100%;text-align:left;padding:10px 0;line-height:1.2;letter-spacing:-.015em;overflow-wrap:anywhere;transition:opacity .2s}
+.row:hover{opacity:.75}
+.row.heavy{font-weight:500}
+.row .rm{display:block;font-size:12px;color:var(--mute);margin-top:4px;font-weight:400;letter-spacing:0}
+.row .rm b{font-weight:500;color:var(--mute)}
+.lnone{color:var(--mute);font-size:16px;padding:20px 0}
+
+/* editor */
+.dt{width:100%;font-size:clamp(24px,5.6vw,34px);line-height:1.1;letter-spacing:-.025em;min-height:44px;display:block}
+.dplus{display:flex;align-items:baseline;gap:18px;margin-top:22px;font-size:13px;color:var(--mute)}
+.dplus b{font-size:22px;font-weight:500;color:var(--ink);letter-spacing:-.02em}
+.dplus button{color:var(--ink);font-weight:500;font-size:16px}
+.fld{margin-top:38px}
+.lab{font-size:12px;color:var(--mute);font-weight:500;margin-bottom:12px;display:flex;justify-content:space-between;letter-spacing:.01em}
+.db{width:100%;font-size:17px;line-height:1.5;min-height:60px;letter-spacing:-.005em}
+.chips{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:15px}
+.chips button{color:var(--dim);transition:color .15s}
+.chips button.on{color:var(--ink);font-weight:500}
+.chipin{font-size:15px;padding:8px 0;border-bottom:1px solid var(--faint);width:100%;margin-top:14px}
+.tasks{list-style:none}
+.tasks li{display:flex;align-items:flex-start;gap:14px;padding:8px 0;font-size:17px;line-height:1.35}
+.tasks li .box{width:14px;height:14px;border:1px solid var(--mute);border-radius:50%;flex-shrink:0;margin-top:5px}
+.tasks li.done .box{background:var(--ink);border-color:var(--ink)}
+.tasks li.done span{color:var(--mute);text-decoration:line-through;text-decoration-color:var(--dim)}
+.tasks li span{flex:1}
+.tasks li .x{color:var(--dim);font-size:16px;padding:0 4px}
+.taskin{width:100%;font-size:17px;padding:8px 0 8px 28px}
+.dfoot{margin-top:50px;font-size:13px;color:var(--mute);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px 22px}
+.dfoot button{color:var(--ink);font-weight:500}
+.dfoot .quiet{color:var(--mute);font-weight:400}
+.dfoot .del{color:var(--dim);font-weight:400}
+
+/* settings */
+.set h2{font-weight:500;font-size:20px;margin:0 0 8px;letter-spacing:-.02em}
+.set p{font-size:15px;line-height:1.55;color:var(--mute);max-width:56ch}
+.set .fld{margin-top:42px}
+.opt{display:flex;gap:22px;flex-wrap:wrap;font-size:14px;font-weight:500}
+.opt button,.opt label{color:var(--ink);cursor:pointer;border-bottom:1px solid var(--faint);padding-bottom:3px}
+.opt button.quiet,.opt button.off{color:var(--mute);font-weight:400}
+.bulk{width:100%;font-size:16px;line-height:1.45;min-height:120px;border:1px solid var(--faint);padding:12px;margin-top:12px}
+.how p{color:var(--ink);font-size:16px;line-height:1.55;margin-bottom:14px;max-width:56ch}
+.how em{color:var(--mute);font-style:normal}
+.released div{display:flex;justify-content:space-between;gap:16px;align-items:baseline;margin-bottom:12px;font-size:15px;color:var(--mute)}
+.released button{font-size:12px;color:var(--ink);font-weight:500;flex-shrink:0}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(90px + var(--sb));z-index:60;font-size:13px;font-weight:500;color:var(--bg);background:var(--ink);padding:8px 16px;border-radius:999px;opacity:0;pointer-events:none;transition:opacity .25s}
+.toast.on{opacity:1}
+@media(prefers-reduced-motion:reduce){.n{animation:none!important}*{transition:none!important}}
+</style>
+</head>
+<body data-theme="dark">
+
+<header class="top">
+  <div class="brand">Vessel<i id="count"></i></div>
+  <button class="more" id="gearBtn" aria-label="Settings">···</button>
+</header>
+
+<div class="threads" id="threads"></div>
+
+<div class="surface" id="surface"></div>
+
+<footer class="capture">
+  <div class="capbox">
+    <input id="cap" placeholder="Pour it here" autocomplete="off" enterkeyhint="done">
+    <button class="keep" id="keep">Keep</button>
+  </div>
+</footer>
+
+<div class="focus" id="focus">
+  <div class="fc">
+    <p class="ft" id="ft"></p>
+    <div class="fm" id="fm"></div>
+    <div class="fa">
+      <button class="plus" data-a="plus" aria-label="Plus one">+1</button>
+      <button data-a="open">Open</button>
+      <button data-a="hold" id="fHold">Hold</button>
+      <button data-a="release">Let go</button>
+    </div>
+  </div>
+</div>
+
+<div class="sheet" id="thread">
+  <div class="sh">
+    <div class="shbar"><button id="thClose">Close</button><span class="ttl" id="thTitle"></span></div>
+    <input class="lfind" id="lfind" placeholder="Find" autocomplete="off">
+    <div id="rows"></div>
+  </div>
+</div>
+
+<div class="sheet" id="sheet">
+  <div class="sh">
+    <div class="shbar"><button id="shClose">Close</button><span id="shWhen"></span></div>
+    <textarea class="dt" id="dt" rows="1" placeholder="The thought"></textarea>
+    <div class="dplus"><b id="dpn">+0</b><button id="dplus">+1</button><span id="dsince"></span></div>
+    <div class="fld"><div class="lab"><span>Room</span></div><textarea class="db" id="db" rows="2" placeholder="Context, where it came from, what it could become"></textarea></div>
+    <div class="fld"><div class="lab"><span>Threads</span></div><div class="chips" id="dchips"></div><input class="chipin" id="dchipin" placeholder="New thread" autocomplete="off"></div>
+    <div class="fld"><div class="lab"><span>Steps</span><span id="dtcount"></span></div><ul class="tasks" id="dtasks"></ul><input class="taskin" id="dtaskin" placeholder="Add a step" autocomplete="off"></div>
+    <div class="dfoot"><div style="display:flex;gap:22px"><button id="dHold">Hold</button><button id="dRelease" class="quiet">Let go</button></div><button class="del" id="dDelete">Delete</button></div>
+  </div>
+</div>
+
+<div class="sheet set" id="settings">
+  <div class="sh">
+    <div class="shbar"><button id="setClose">Close</button><span class="ttl">Vessel</span></div>
+    <h2>Appearance</h2>
+    <div class="opt"><button data-theme="dark">Ink</button><button data-theme="bone">Bone</button></div>
+    <div class="fld">
+      <h2>Bring everything here</h2>
+      <p>Paste a dump from Notes, Notion, anywhere. One thought per line. #thread files a line. Start a line with ! to hold it.</p>
+      <textarea class="bulk" id="bulk" placeholder="One thought per line"></textarea>
+      <div class="opt" style="margin-top:14px"><button id="bulkGo">Pour them in</button></div>
+    </div>
+    <div class="fld">
+      <h2>Carry it between devices</h2>
+      <p>This file keeps its own memory on whichever device opens it. Export here, import there.</p>
+      <div class="opt"><button id="exportBtn">Export</button><label>Import <input type="file" id="importIn" accept="application/json" hidden></label><button class="quiet" id="clearSamples">Remove the examples</button></div>
+    </div>
+    <div class="fld">
+      <h2>Let go</h2>
+      <p>Thoughts you released. Nothing is gone until you delete it.</p>
+      <div class="released" id="released"></div>
+    </div>
+    <div class="fld how">
+      <h2>How it works</h2>
+      <p>The home screen is a surface, not a list. It never scrolls. What you see is what your mind is holding right now: everything you've held, the thoughts you've said yes to most, whatever arrived in the last day, and a few older ones resurfaced at random so nothing is forgotten by accident.</p>
+      <p>A new thought arrives small, near where you typed it. It stays small until you tell it otherwise.</p>
+      <p>Tap a thought and say <em>+1</em>. That's the whole system. Every time you see it and it's still a good idea, +1. Thoughts grow with each one and move toward the centre. Thoughts you never come back to drift out to the edges and eventually leave the surface, though they're always in <em>All</em>.</p>
+      <p><em>Hold</em> keeps a thought on the surface permanently, with a dot.</p>
+      <p>Tap a thread to see everything in it, sized by how many times you've said yes. That view scrolls. The home doesn't.</p>
+      <p><em>Resurface</em> deals a fresh hand of older thoughts. Write <em>#music</em> inside a thought to thread it. Enter keeps. / jumps to the box.</p>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+'use strict';
+const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
+const DAY=86400000, KEY='vessel.v1';
+const uid=()=>Math.random().toString(36).slice(2,9)+Date.now().toString(36);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+let S={thoughts:[],theme:'dark',seeded:false};
+let focusId=null, openId=null, newId=null, seed=Math.random(), threadOpen=null, tq='';
+
+/* storage */
+async function load(){
+  try{ if(window.storage){const r=await window.storage.get(KEY,false); if(r&&r.value) return JSON.parse(r.value);} }catch(e){}
+  try{ const v=localStorage.getItem(KEY); if(v) return JSON.parse(v);}catch(e){}
+  return null;
+}
+let saveT=null;
+function save(){ clearTimeout(saveT); saveT=setTimeout(async()=>{ const s=JSON.stringify(S); try{localStorage.setItem(KEY,s);}catch(e){} try{ if(window.storage) await window.storage.set(KEY,s,false);}catch(e){} },150); }
+
+/* seed */
+function seedData(){
+  const now=Date.now();
+  const mk=(text,pluses,threads,ago,extra)=>Object.assign({id:uid(),text,body:'',pluses,threads,tasks:[],created:now-ago,touched:now-ago,held:false,archived:false,sample:true},extra||{});
+  return [
+    mk('One vessel. Every thought goes here or it doesn\u2019t exist.',6,['vessel'],DAY*2,{held:true,tasks:[{t:'Dump the iOS notes',d:false},{t:'Dump Notion',d:false},{t:'Screenshots and saved posts',d:false}]}),
+    mk('Simplicity is earned, not chosen.',9,['design'],DAY*20,{held:true,body:'The houses that last never shout. The item carries the message; the frame disappears.'}),
+    mk('Export the stems before the plugins stop opening.',3,['music'],DAY*6),
+    mk('Rain at 2am, everything off. This is the tempo the next instrumental should sit at.',2,['music','inspiration'],DAY*1.1),
+    mk('Character creation is the whole game. Build the product like that.',4,['business','design'],DAY*15),
+    mk('Sample packs sold as lookbooks, not lists.',1,['business','music'],DAY*3.1),
+    mk('A statue is finished when nothing more can be removed.',2,['design'],DAY*9),
+    mk('check the sample rate on the drum loop',0,['music'],DAY*.3),
+    mk('burnt amber, slate, bone',0,['inspiration'],DAY*.6),
+    mk('gate the reverb tail on the snare',0,['music'],DAY*.1),
+    mk('Weekly review on the off day. Wednesday is the quiet one.',1,['routine'],DAY*12),
+    mk('petrichor: the smell of rain has a name',0,['inspiration'],DAY*30),
+    mk('ask about the bus pass before the month rolls',0,[],DAY*40),
+    mk('what would this look like with nothing on it',0,['design'],DAY*25)
+  ];
+}
+
+/* helpers */
+function parse(raw){
+  let text=raw.trim(), held=false; const threads=[];
+  text=text.replace(/(^|\s)#([\w\-]+)/g,(m,sp,t)=>{threads.push(t.toLowerCase());return sp;});
+  if(/^!\s*/.test(text)){held=true;text=text.replace(/^!\s*/,'');}
+  text=text.replace(/[ \t]{2,}/g,' ').trim();
+  return {text,threads:[...new Set(threads)],held};
+}
+const live=()=>S.thoughts.filter(t=>!t.archived);
+const byId=id=>S.thoughts.find(t=>t.id===id);
+function threadCounts(){const m={};live().forEach(t=>t.threads.forEach(th=>m[th]=(m[th]||0)+1));return m;}
+function toast(msg){const el=$('#toast');el.textContent=msg;el.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.remove('on'),1300);}
+function autosize(el){el.style.height='auto';el.style.height=el.scrollHeight+'px';}
+function fmtWhen(ts){const d=new Date(ts);return d.toLocaleDateString(undefined,{day:'numeric',month:'long',year:'numeric'});}
+function rel(ts){const d=(Date.now()-ts)/DAY;if(d<1)return 'today';if(d<2)return 'yesterday';if(d<7)return Math.floor(d)+' days';if(d<30)return Math.floor(d/7)+' weeks';return Math.floor(d/30)+' months';}
+function hash(s){let h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))|0;return h;}
+function score(t){const age=(Date.now()-t.created)/DAY;return (t.pluses||0)+(t.held?3:0)+Math.min(1.5,age/45);}
+function fsize(s){return Math.round(13+21*Math.sqrt(Math.min(s,16)/16));}
+function opac(t,s){let o=.5+.5*Math.min(s,5)/5;if(Date.now()-t.created<DAY)o=Math.max(o,.8);if(t.held)o=1;return o;}
+
+/* pool for the surface */
+function buildPool(){
+  const L=live(), now=Date.now();
+  const held=L.filter(t=>t.held);
+  const top=L.filter(t=>!t.held&&(t.pluses||0)>0).sort((a,b)=>score(b)-score(a)).slice(0,10);
+  const recent=L.filter(t=>!t.held&&!top.includes(t)&&now-t.created<DAY).sort((a,b)=>b.created-a.created).slice(0,6);
+  const rest=L.filter(t=>!held.includes(t)&&!top.includes(t)&&!recent.includes(t)).sort((a,b)=>hash(a.id+seed)-hash(b.id+seed)).slice(0,14);
+  const lead=[...held,...top].sort((a,b)=>score(b)-score(a));
+  const pool=[...lead,...recent,...rest];
+  if(newId){const i=pool.findIndex(t=>t.id===newId);if(i<0){const t=byId(newId);if(t)pool.splice(lead.length,0,t);}}
+  return pool;
+}
+function findSpot(w,h,pad,W,H,placed,ox,oy){
+  const a0=Math.random()*Math.PI*2, sy=Math.min(2,Math.max(.7,H/W));
+  const step=Math.max(6,W/62);
+  for(let i=0;i<1500;i++){
+    const r=Math.sqrt(i)*step, a=a0+i*.33;
+    const x=ox+r*Math.cos(a)-w/2, y=oy+r*Math.sin(a)*sy-h/2;
+    if(x<8||y<4||x+w>W-8||y+h>H-24) continue;
+    let ok=true;
+    for(const p of placed){const g=Math.max(pad,p.pad);if(!(x+w+g<p.x||x>p.x+p.w+g||y+h+g<p.y||y>p.y+p.h+g)){ok=false;break;}}
+    if(ok) return [x,y];
+  }
+  return null;
+}
+function layout(){
+  const sf=$('#surface'); const W=sf.clientWidth, H=sf.clientHeight; if(!W||!H) return;
+  sf.innerHTML='';
+  const L=live();
+  $('#count').textContent=L.length||'';
+  renderThreads();
+  if(!L.length){sf.innerHTML=`<div class="sempty">Empty, for now.<small>Type below. It arrives small. Say +1 when it's still true.</small></div>`;return;}
+  const pool=buildPool(); const placed=[]; let fails=0;
+  for(const t of pool){
+    const s=score(t), fs=fsize(s);
+    const el=document.createElement('div'); el.className='n measure'+(s>=6?' heavy':'')+(t.held?' held':''); el.dataset.id=t.id;
+    el.style.fontSize=fs+'px'; el.style.maxWidth=Math.min(W*.6,fs*13)+'px'; el.style.opacity=opac(t,s);
+    el.textContent=t.text; sf.appendChild(el);
+    const w=el.offsetWidth, h=el.offsetHeight, pad=10+fs*.4;
+    const isNew=t.id===newId;
+    const pos=findSpot(w,h,pad,W,H,placed,W/2,isNew?H*.82:H*.5);
+    if(!pos){el.remove();if(++fails>=5&&placed.length>5)break;continue;}
+    el.classList.remove('measure'); el.style.left=pos[0]+'px'; el.style.top=pos[1]+'px';
+    el.style.setProperty('--dx',(Math.random()*6-3).toFixed(1)+'px'); el.style.setProperty('--dy',(Math.random()*6-3).toFixed(1)+'px');
+    el.style.setProperty('--dur',(16+Math.random()*14).toFixed(1)+'s'); el.style.setProperty('--del',(-Math.random()*20).toFixed(1)+'s');
+    if(isNew) el.classList.add('new');
+    placed.push({x:pos[0],y:pos[1],w,h,pad});
+  }
+  const rs=document.createElement('button'); rs.className='resurface'; rs.id='resurface'; rs.textContent='Resurface'; sf.appendChild(rs);
+  newId=null;
+}
+function renderThreads(){
+  const tc=threadCounts(); const names=Object.keys(tc).sort((a,b)=>tc[b]-tc[a]||a.localeCompare(b));
+  const max=Math.max(1,...names.map(n=>tc[n]));
+  $('#threads').innerHTML=`<button class="all" data-th="*" style="font-size:14px">All</button>`+names.map(n=>{const sz=13+Math.round(9*Math.sqrt(tc[n]/max));return `<button data-th="${esc(n)}" style="font-size:${sz}px">${esc(n)}<sup>${tc[n]}</sup></button>`;}).join('');
+}
+
+/* capture */
+const cap=$('#cap'), keep=$('#keep');
+cap.addEventListener('input',()=>keep.classList.toggle('ready',cap.value.trim().length>0));
+cap.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();doKeep();}});
+keep.addEventListener('click',doKeep);
+function doKeep(){
+  const p=parse(cap.value); if(!p.text) return; const now=Date.now();
+  const t={id:uid(),text:p.text,body:'',pluses:0,threads:p.threads,tasks:[],created:now,touched:now,held:p.held,archived:false};
+  S.thoughts.push(t); save(); cap.value=''; keep.classList.remove('ready'); newId=t.id; layout(); cap.focus({preventScroll:true});
+}
+
+/* focus card */
+const focus=$('#focus');
+function openFocus(id){
+  const t=byId(id); if(!t) return; focusId=id; t.touched=Date.now();
+  const s=score(t);
+  $('#ft').textContent=t.text; $('#ft').className='ft'+(s>=6?' heavy':'');
+  renderFm(t);
+  $('#fHold').textContent=t.held?'Held':'Hold'; $('#fHold').classList.toggle('held',t.held);
+  focus.classList.add('on');
+}
+function renderFm(t){$('#fm').innerHTML=`<b>+${t.pluses||0}</b>${t.threads.map(x=>`<span>${esc(x)}</span>`).join('')}<span>${rel(t.created)}</span>${t.tasks.length?`<span>${t.tasks.filter(x=>x.d).length}/${t.tasks.length} steps</span>`:''}`;}
+function closeFocus(relayout){focus.classList.remove('on');focusId=null;save();if(relayout!==false){layout();if(threadOpen!==null)renderRows();}}
+focus.addEventListener('click',e=>{
+  const b=e.target.closest('[data-a]');
+  if(!b){ if(!e.target.closest('.fc')) closeFocus(); return; }
+  const t=byId(focusId); if(!t) return; const a=b.dataset.a;
+  if(a==='plus'){t.pluses=(t.pluses||0)+1;t.touched=Date.now();renderFm(t);$('#fm b').classList.add('pop');save();setTimeout(()=>closeFocus(),420);}
+  else if(a==='open'){closeFocus(false);openThought(t.id);}
+  else if(a==='hold'){t.held=!t.held;$('#fHold').textContent=t.held?'Held':'Hold';$('#fHold').classList.toggle('held',t.held);save();setTimeout(()=>closeFocus(),200);}
+  else if(a==='release'){t.archived=true;t.touched=Date.now();save();toast('Let go');closeFocus();}
+});
+
+/* thread list */
+const thSheet=$('#thread');
+function openThread(name){threadOpen=name;tq='';$('#lfind').value='';renderRows();thSheet.classList.add('on');}
+function closeThread(){threadOpen=null;thSheet.classList.remove('on');layout();}
+function renderRows(){
+  const tc=threadCounts();
+  let L=live();
+  if(threadOpen!=='*') L=L.filter(t=>t.threads.includes(threadOpen));
+  if(tq) L=L.filter(t=>(t.text+' '+t.body+' '+t.threads.join(' ')+' '+t.tasks.map(x=>x.t).join(' ')).toLowerCase().includes(tq));
+  L.sort((a,b)=>score(b)-score(a)||b.created-a.created);
+  $('#thTitle').innerHTML=(threadOpen==='*'?'All':esc(threadOpen))+`<i>${L.length}</i>`;
+  $('#rows').innerHTML=L.length?L.map(t=>{const s=score(t);const fs=Math.round(15+11*Math.sqrt(Math.min(s,16)/16));return `<button class="row${s>=6?' heavy':''}" data-id="${t.id}" style="font-size:${fs}px;opacity:${(0.6+0.4*Math.min(s,5)/5).toFixed(2)}">${t.held?'<span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:currentColor;margin:0 .5em .2em 0"></span>':''}${esc(t.text)}<span class="rm"><b>+${t.pluses||0}</b>${t.threads.length&&threadOpen==='*'?' · '+t.threads.map(esc).join(', '):''} · ${rel(t.created)}</span></button>`;}).join(''):`<div class="lnone">Nothing here.</div>`;
+}
+$('#thClose').addEventListener('click',closeThread);
+$('#lfind').addEventListener('input',e=>{tq=e.target.value.trim().toLowerCase();renderRows();});
+$('#rows').addEventListener('click',e=>{const b=e.target.closest('[data-id]');if(b)openFocus(b.dataset.id);});
+$('#threads').addEventListener('click',e=>{const b=e.target.closest('[data-th]');if(b)openThread(b.dataset.th);});
+
+/* editor */
+const sheet=$('#sheet'), dt=$('#dt'), db=$('#db');
+function openThought(id){
+  const t=byId(id); if(!t) return; openId=id; t.touched=Date.now();
+  dt.value=t.text; db.value=t.body||'';
+  $('#shWhen').textContent=fmtWhen(t.created); $('#dsince').textContent=rel(t.created);
+  $('#dpn').textContent='+'+(t.pluses||0);
+  $('#dHold').textContent=t.held?'Held':'Hold'; $('#dRelease').textContent=t.archived?'Bring back':'Let go';
+  renderChips(); renderTasks();
+  sheet.classList.add('on');
+  requestAnimationFrame(()=>{autosize(dt);autosize(db);if(!t.text)dt.focus();});
+}
+function closeThought(){
+  if(openId){const t=byId(openId);if(t&&!t.text.trim()&&!t.body.trim()&&!t.tasks.length)S.thoughts=S.thoughts.filter(x=>x.id!==openId);}
+  openId=null; sheet.classList.remove('on'); save(); if(threadOpen!==null)renderRows(); layout();
+}
+function renderChips(){const t=byId(openId);const all=[...new Set([...Object.keys(threadCounts()),...t.threads])].sort();$('#dchips').innerHTML=all.map(n=>`<button data-th="${esc(n)}" class="${t.threads.includes(n)?'on':''}">${esc(n)}</button>`).join('');}
+function renderTasks(){const t=byId(openId);$('#dtasks').innerHTML=t.tasks.map((x,i)=>`<li class="${x.d?'done':''}"><button class="box" data-i="${i}" aria-label="toggle"></button><span>${esc(x.t)}</span><button class="x" data-x="${i}" aria-label="remove">&times;</button></li>`).join('');$('#dtcount').textContent=t.tasks.length?`${t.tasks.filter(x=>x.d).length} of ${t.tasks.length}`:'';}
+dt.addEventListener('input',()=>{byId(openId).text=dt.value;autosize(dt);save();});
+dt.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();db.focus();}});
+db.addEventListener('input',()=>{byId(openId).body=db.value;autosize(db);save();});
+$('#dplus').addEventListener('click',()=>{const t=byId(openId);t.pluses=(t.pluses||0)+1;$('#dpn').textContent='+'+t.pluses;$('#dpn').classList.remove('pop');void $('#dpn').offsetWidth;$('#dpn').classList.add('pop');save();});
+$('#dchips').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const t=byId(openId);const n=b.dataset.th;t.threads=t.threads.includes(n)?t.threads.filter(x=>x!==n):[...t.threads,n];renderChips();save();});
+$('#dchipin').addEventListener('keydown',e=>{if(e.key!=='Enter')return;e.preventDefault();const n=e.target.value.trim().replace(/^#/,'').toLowerCase().replace(/\s+/g,'-');if(!n)return;const t=byId(openId);if(!t.threads.includes(n))t.threads.push(n);e.target.value='';renderChips();save();});
+$('#dtaskin').addEventListener('keydown',e=>{if(e.key!=='Enter')return;e.preventDefault();const v=e.target.value.trim();if(!v)return;byId(openId).tasks.push({t:v,d:false});e.target.value='';renderTasks();save();});
+$('#dtasks').addEventListener('click',e=>{const t=byId(openId);const b=e.target.closest('button');if(!b)return;if(b.dataset.i!==undefined)t.tasks[+b.dataset.i].d=!t.tasks[+b.dataset.i].d;else if(b.dataset.x!==undefined)t.tasks.splice(+b.dataset.x,1);renderTasks();save();});
+$('#dHold').addEventListener('click',()=>{const t=byId(openId);t.held=!t.held;$('#dHold').textContent=t.held?'Held':'Hold';save();});
+$('#dRelease').addEventListener('click',()=>{const t=byId(openId);t.archived=!t.archived;save();toast(t.archived?'Let go':'Back on the surface');closeThought();});
+$('#dDelete').addEventListener('click',()=>{if(!confirm('Delete this thought for good?'))return;S.thoughts=S.thoughts.filter(x=>x.id!==openId);openId=null;closeThought();toast('Deleted');});
+$('#shClose').addEventListener('click',closeThought);
+
+/* settings */
+const settings=$('#settings');
+function openSettings(){renderReleased();settings.classList.add('on');}
+function closeSettings(){settings.classList.remove('on');layout();}
+$('#gearBtn').addEventListener('click',openSettings);
+$('#setClose').addEventListener('click',closeSettings);
+function setTheme(th){S.theme=th;document.body.dataset.theme=th;document.querySelector('meta[name=theme-color]').content=th==='bone'?'#EEEBE5':'#000000';$$('.set [data-theme]').forEach(b=>b.classList.toggle('off',b.dataset.theme!==th));save();}
+$$('.set [data-theme]').forEach(b=>b.addEventListener('click',()=>setTheme(b.dataset.theme)));
+$('#bulkGo').addEventListener('click',()=>{
+  const lines=$('#bulk').value.split(/\n+/).map(l=>l.trim()).filter(Boolean); if(!lines.length)return;
+  let n=0; const base=Date.now();
+  lines.forEach((l,i)=>{const p=parse(l);if(!p.text)return;S.thoughts.push({id:uid(),text:p.text,body:'',pluses:0,threads:p.threads,tasks:[],created:base-i,touched:base-i,held:p.held,archived:false});n++;});
+  $('#bulk').value=''; save(); toast(n+' poured in'); closeSettings();
+});
+$('#exportBtn').addEventListener('click',()=>{const blob=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='vessel-'+new Date().toISOString().slice(0,10)+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000);});
+$('#importIn').addEventListener('change',e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(!Array.isArray(d.thoughts))throw 0;const have=new Set(S.thoughts.map(t=>t.id));let n=0;d.thoughts.forEach(t=>{if(!have.has(t.id)){migrate(t);S.thoughts.push(t);n++;}});save();toast(n+' brought in');layout();}catch(err){toast('Not a Vessel export');}};r.readAsText(f);e.target.value='';});
+$('#clearSamples').addEventListener('click',()=>{const n=S.thoughts.filter(t=>t.sample).length;S.thoughts=S.thoughts.filter(t=>!t.sample);save();toast(n?'Examples removed':'No examples left');layout();});
+function renderReleased(){const R=S.thoughts.filter(t=>t.archived).sort((a,b)=>b.touched-a.touched);$('#released').innerHTML=R.length?R.map(t=>`<div><span>${esc(t.text)}</span><button data-restore="${t.id}">Bring back</button></div>`).join(''):`<p>Nothing released.</p>`;}
+$('#released').addEventListener('click',e=>{const b=e.target.closest('[data-restore]');if(!b)return;const t=byId(b.dataset.restore);t.archived=false;t.touched=Date.now();save();renderReleased();toast('Back on the surface');});
+
+/* global */
+$('#surface').addEventListener('click',e=>{
+  if(e.target.closest('#resurface')){seed=Math.random();layout();return;}
+  const n=e.target.closest('.n[data-id]'); if(n) openFocus(n.dataset.id);
+});
+document.addEventListener('keydown',e=>{
+  const el=document.activeElement, typing=el&&(el.tagName==='TEXTAREA'||el.tagName==='INPUT');
+  if(e.key==='Escape'){if(focus.classList.contains('on'))closeFocus();else if(sheet.classList.contains('on'))closeThought();else if(settings.classList.contains('on'))closeSettings();else if(thSheet.classList.contains('on'))closeThread();return;}
+  if(e.key==='/'&&!typing){e.preventDefault();cap.focus();}
+  if(e.key==='+'&&focus.classList.contains('on')){e.preventDefault();$('[data-a=plus]').click();}
+});
+let rT=null; window.addEventListener('resize',()=>{clearTimeout(rT);rT=setTimeout(()=>{if(document.activeElement!==cap)layout();},180);});
+function migrate(t){ if(t.pluses==null) t.pluses=Math.max(0,((t.weight||2)-2)*2); if(t.held==null) t.held=false; if(!t.tasks) t.tasks=[]; if(!t.threads) t.threads=[]; }
+
+/* boot */
+(async function(){
+  const d=await load(); if(d) S=Object.assign(S,d);
+  S.thoughts.forEach(migrate);
+  if(!S.seeded){S.thoughts=seedData().concat(S.thoughts);S.seeded=true;save();}
+  setTheme(S.theme||'dark');
+  if(document.fonts&&document.fonts.ready){document.fonts.ready.then(layout);} 
+  layout();
+})();
+})();
+</script>
+</body>
+</html>
