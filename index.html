@@ -36,24 +36,28 @@ input::placeholder,textarea::placeholder{color:var(--dim)}
 .more{color:var(--mute);font-size:18px;line-height:1;letter-spacing:.06em}
 
 /* threads */
-.threads{flex:none;padding:18px 20px 0;display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 16px;max-height:66px;overflow:hidden;line-height:1.25}
+.threads{flex:none;padding:18px 20px 0;display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 16px;max-height:92px;overflow:hidden;line-height:1.25}
+.threads button.on{color:var(--ink);font-weight:500}
+.threads button.zero{color:var(--dim)}
+.threads button.zero sup{color:var(--dim)}
+.threads .mode{display:inline-flex;gap:10px;font-size:13px;margin-right:2px}
+.threads .mode button{color:var(--dim)}
+.threads .mode button.on{color:var(--ink)}
+.threads .clr{font-size:13px;color:var(--mute)}
 .threads button{color:var(--mute);letter-spacing:-.01em;transition:color .2s}
 .threads button:hover{color:var(--ink)}
-.threads button.all{color:var(--ink);font-weight:500}
+.threads button.all{color:var(--ink);font-weight:500;font-size:14px}
 .threads button sup{font-size:.6em;color:var(--dim);margin-left:.25em;vertical-align:super;font-weight:400}
 
 /* surface */
 .surface{flex:1;position:relative;overflow:hidden;min-height:0}
-.n{position:absolute;line-height:1.16;letter-spacing:-.012em;cursor:pointer;-webkit-tap-highlight-color:transparent;overflow-wrap:anywhere;animation:drift var(--dur,20s) ease-in-out var(--del,0s) infinite alternate;transition:opacity .4s;will-change:transform}
+.n{position:absolute;line-height:1.16;letter-spacing:-.012em;cursor:pointer;-webkit-tap-highlight-color:transparent;overflow-wrap:anywhere;transition:opacity .7s ease,font-size .7s cubic-bezier(.2,.7,.2,1);will-change:transform}
+.n sup{font-size:.55em;color:var(--mute);margin-left:.2em;vertical-align:super;font-weight:400;letter-spacing:0}
+.n.arrive{animation:arrive .9s ease both}
 .n.heavy{font-weight:500;letter-spacing:-.02em}
 .n.held::before{content:"";display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--ink);margin:0 .5em 0 0;vertical-align:.32em}
-.n.new{animation:arrive .9s ease both,drift var(--dur,20s) ease-in-out var(--del,0s) infinite alternate}
-.n.bloom{animation:bloom .5s ease both}
 .n.measure{visibility:hidden;left:0;top:0;animation:none}
-@keyframes drift{from{transform:translate(0,0)}to{transform:translate(var(--dx,2px),var(--dy,-3px))}}
-@keyframes arrive{from{opacity:0;transform:translateY(14px)}to{transform:translateY(0)}}
-@keyframes bloom{0%{transform:scale(1)}40%{transform:scale(1.08)}100%{transform:scale(1)}}
-.surface:active .n{}
+@keyframes arrive{from{opacity:0}}
 .sempty{position:absolute;inset:0;display:grid;place-items:center;color:var(--mute);font-size:18px;letter-spacing:-.01em;text-align:center;padding:20px;line-height:1.4}
 .sempty small{display:block;color:var(--dim);font-size:13px;margin-top:8px}
 .resurface{position:absolute;left:20px;bottom:10px;font-size:12px;color:var(--dim);letter-spacing:.01em;transition:color .2s;z-index:2}
@@ -144,7 +148,7 @@ input::placeholder,textarea::placeholder{color:var(--dim)}
 .released button{font-size:12px;color:var(--ink);font-weight:500;flex-shrink:0}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(90px + var(--sb));z-index:60;font-size:13px;font-weight:500;color:var(--bg);background:var(--ink);padding:8px 16px;border-radius:999px;opacity:0;pointer-events:none;transition:opacity .25s}
 .toast.on{opacity:1}
-@media(prefers-reduced-motion:reduce){.n{animation:none!important}*{transition:none!important}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body data-theme="dark">
@@ -203,6 +207,7 @@ input::placeholder,textarea::placeholder{color:var(--dim)}
     <div class="shbar"><button id="setClose">Close</button><span class="ttl">Vessel</span></div>
     <h2>Appearance</h2>
     <div class="opt"><button data-theme="dark">Ink</button><button data-theme="bone">Bone</button></div>
+    <div class="fld"><h2>Motion</h2><p>The surface moves very slowly, like water. Turn it off when you need it still.</p><div class="opt"><button data-motion="1">Moving</button><button data-motion="0">Still</button></div></div>
     <div class="fld">
       <h2>Bring everything here</h2>
       <p>Paste a dump from Notes, Notion, anywhere. One thought per line. #thread files a line. Start a line with ! to hold it.</p>
@@ -224,8 +229,8 @@ input::placeholder,textarea::placeholder{color:var(--dim)}
       <p>The home screen is a surface, not a list. It never scrolls. What you see is what your mind is holding right now: everything you've held, the thoughts you've said yes to most, whatever arrived in the last day, and a few older ones resurfaced at random so nothing is forgotten by accident.</p>
       <p>A new thought arrives small, near where you typed it. It stays small until you tell it otherwise.</p>
       <p>Tap a thought and say <em>+1</em>. That's the whole system. Every time you see it and it's still a good idea, +1. Thoughts grow with each one and move toward the centre. Thoughts you never come back to drift out to the edges and eventually leave the surface, though they're always in <em>All</em>.</p>
-      <p><em>Hold</em> keeps a thought on the surface permanently, with a dot.</p>
-      <p>Tap a thread to see everything in it, sized by how many times you've said yes. That view scrolls. The home doesn't.</p>
+      <p><em>Hold</em> keeps a thought on the surface permanently, with a dot. Thoughts that share a thread drift toward each other over the day; thoughts with more +1s settle toward the centre.</p>
+      <p>Tap a thread and the surface filters to it. Tap more than one: <em>any</em> shows thoughts carrying at least one of them, <em>all</em> shows only thoughts carrying every one, and the counts beside the other threads update to show where the overlaps are. <em>List</em> opens everything as a scrolling list.</p><p>A small superscript on a thought is how many open steps it holds. Finish them and it goes quiet.</p>
       <p><em>Resurface</em> deals a fresh hand of older thoughts. Write <em>#music</em> inside a thought to thread it. Enter keeps. / jumps to the box.</p>
     </div>
   </div>
@@ -242,7 +247,9 @@ const uid=()=>Math.random().toString(36).slice(2,9)+Date.now().toString(36);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
 let S={thoughts:[],theme:'dark',seeded:false};
-let focusId=null, openId=null, newId=null, seed=Math.random(), threadOpen=null, tq='';
+let focusId=null, openId=null, newId=null, seed=Math.random(), threadOpen=null, tq='', dirty=false;
+const filt={tags:[],mode:'any'};
+let P=[], loopId=null, settleUntil=0, paused=false, last=0;
 
 /* storage */
 async function load(){
@@ -296,12 +303,13 @@ function fsize(s){return Math.round(13+21*Math.sqrt(Math.min(s,16)/16));}
 function opac(t,s){let o=.5+.5*Math.min(s,5)/5;if(Date.now()-t.created<DAY)o=Math.max(o,.8);if(t.held)o=1;return o;}
 
 /* pool for the surface */
+function matchesFilt(t){if(!filt.tags.length)return true;return filt.mode==='all'?filt.tags.every(x=>t.threads.includes(x)):filt.tags.some(x=>t.threads.includes(x));}
 function buildPool(){
-  const L=live(), now=Date.now();
+  const L=live().filter(matchesFilt), now=Date.now();
   const held=L.filter(t=>t.held);
   const top=L.filter(t=>!t.held&&(t.pluses||0)>0).sort((a,b)=>score(b)-score(a)).slice(0,10);
   const recent=L.filter(t=>!t.held&&!top.includes(t)&&now-t.created<DAY).sort((a,b)=>b.created-a.created).slice(0,6);
-  const rest=L.filter(t=>!held.includes(t)&&!top.includes(t)&&!recent.includes(t)).sort((a,b)=>hash(a.id+seed)-hash(b.id+seed)).slice(0,14);
+  const rest=L.filter(t=>!held.includes(t)&&!top.includes(t)&&!recent.includes(t)).sort((a,b)=>hash(a.id+seed)-hash(b.id+seed)).slice(0,filt.tags.length?60:14);
   const lead=[...held,...top].sort((a,b)=>score(b)-score(a));
   const pool=[...lead,...recent,...rest];
   if(newId){const i=pool.findIndex(t=>t.id===newId);if(i<0){const t=byId(newId);if(t)pool.splice(lead.length,0,t);}}
@@ -326,31 +334,82 @@ function layout(){
   const L=live();
   $('#count').textContent=L.length||'';
   renderThreads();
+  P=[]; dirty=false;
   if(!L.length){sf.innerHTML=`<div class="sempty">Empty, for now.<small>Type below. It arrives small. Say +1 when it's still true.</small></div>`;return;}
-  const pool=buildPool(); const placed=[]; let fails=0;
+  const pool=buildPool(); const placed=[]; let fails=0, k=0;
+  if(!pool.length){sf.innerHTML=`<div class="sempty">Nothing carries all of those.<small>Try any, or clear the threads.</small></div>`;}
   for(const t of pool){
     const s=score(t), fs=fsize(s);
     const el=document.createElement('div'); el.className='n measure'+(s>=6?' heavy':'')+(t.held?' held':''); el.dataset.id=t.id;
     el.style.fontSize=fs+'px'; el.style.maxWidth=Math.min(W*.6,fs*13)+'px'; el.style.opacity=opac(t,s);
-    el.textContent=t.text; sf.appendChild(el);
-    const w=el.offsetWidth, h=el.offsetHeight, pad=10+fs*.4;
+    fill(el,t); sf.appendChild(el);
+    const w=el.offsetWidth, h=el.offsetHeight, pad=12+fs*.45;
     const isNew=t.id===newId;
     const pos=findSpot(w,h,pad,W,H,placed,W/2,isNew?H*.82:H*.5);
     if(!pos){el.remove();if(++fails>=5&&placed.length>5)break;continue;}
     el.classList.remove('measure'); el.style.left=pos[0]+'px'; el.style.top=pos[1]+'px';
-    el.style.setProperty('--dx',(Math.random()*6-3).toFixed(1)+'px'); el.style.setProperty('--dy',(Math.random()*6-3).toFixed(1)+'px');
-    el.style.setProperty('--dur',(16+Math.random()*14).toFixed(1)+'s'); el.style.setProperty('--del',(-Math.random()*20).toFixed(1)+'s');
-    if(isNew) el.classList.add('new');
+    el.classList.add('arrive'); el.style.animationDelay=(isNew?0:Math.min(1.3,k*.07)).toFixed(2)+'s'; k++;
     placed.push({x:pos[0],y:pos[1],w,h,pad});
+    P.push({el,t,s,x:pos[0],y:pos[1],x0:pos[0],y0:pos[1],w,h,pad,vx:0,vy:0,ph1:Math.random()*6.3,ph2:Math.random()*6.3,f1:.06+Math.random()*.08,f2:.05+Math.random()*.08});
   }
   const rs=document.createElement('button'); rs.className='resurface'; rs.id='resurface'; rs.textContent='Resurface'; sf.appendChild(rs);
-  newId=null;
+  newId=null; settleUntil=performance.now()+1600+k*70; startLoop();
+}
+function fill(el,t){
+  el.textContent=t.text;
+  const open=t.tasks.filter(x=>!x.d).length;
+  if(open){const s=document.createElement('sup');s.textContent=open;el.appendChild(s);}
+}
+
+/* the water */
+function shared(a,b){return a.threads.some(x=>b.threads.includes(x));}
+function startLoop(){ if(loopId) return; last=performance.now(); loopId=requestAnimationFrame(tick); }
+function tick(now){
+  loopId=requestAnimationFrame(tick);
+  const busy=document.hidden||paused||!S.motion||focus.classList.contains('on')||sheet.classList.contains('on')||thSheet.classList.contains('on')||settings.classList.contains('on');
+  const dt=Math.min(.05,Math.max(0,(now-last)/1000)); last=now;
+  if(busy||!P.length) return;
+  const sf=$('#surface'); const W=sf.clientWidth, H=sf.clientHeight; if(!W||!H) return;
+  const settling=now<settleUntil, m=settling?40:1, cap=settling?70:.4, ts=now/1000;
+  for(const a of P){
+    const cx=a.x+a.w/2, cy=a.y+a.h/2, g=(.004+.006*Math.min(a.s,10))*m;
+    a.fx=(W/2-cx)*g+Math.sin(ts*a.f1+a.ph1)*.7;
+    a.fy=(H/2-cy)*g+Math.cos(ts*a.f2+a.ph2)*.7;
+  }
+  for(let i=0;i<P.length;i++)for(let j=i+1;j<P.length;j++){
+    const a=P[i], b=P[j], gm=Math.max(a.pad,b.pad);
+    const dx=(b.x+b.w/2)-(a.x+a.w/2), dy=(b.y+b.h/2)-(a.y+a.h/2);
+    const gap=Math.max(Math.abs(dx)-(a.w+b.w)/2, Math.abs(dy)-(a.h+b.h)/2);
+    const d=Math.hypot(dx,dy)||1, ux=dx/d, uy=dy/d;
+    if(gap<gm){const f=(gm-gap)*3*m;a.fx-=ux*f;a.fy-=uy*f;b.fx+=ux*f;b.fy+=uy*f;}
+    else if(gap>gm*1.5&&shared(a.t,b.t)){const f=.6*m;a.fx+=ux*f;a.fy+=uy*f;b.fx-=ux*f;b.fy-=uy*f;}
+  }
+  const damp=Math.exp(-3.5*dt);
+  for(const a of P){
+    a.vx=(a.vx+a.fx*dt)*damp; a.vy=(a.vy+a.fy*dt)*damp;
+    const sp=Math.hypot(a.vx,a.vy); if(sp>cap){a.vx*=cap/sp;a.vy*=cap/sp;}
+    a.x=Math.min(W-8-a.w,Math.max(8,a.x+a.vx*dt)); a.y=Math.min(H-24-a.h,Math.max(4,a.y+a.vy*dt));
+    a.el.style.transform='translate3d('+(a.x-a.x0).toFixed(2)+'px,'+(a.y-a.y0).toFixed(2)+'px,0)';
+  }
+}
+function grow(id){
+  const a=P.find(p=>p.t.id===id); if(!a){layout();return;}
+  const s=score(a.t); a.s=s; const fs=fsize(s);
+  a.el.style.fontSize=fs+'px'; a.el.style.opacity=opac(a.t,s); a.el.style.maxWidth=Math.min($('#surface').clientWidth*.6,fs*13)+'px'; a.el.classList.toggle('heavy',s>=6);
+  fill(a.el,a.t);
+  setTimeout(()=>{a.w=a.el.offsetWidth;a.h=a.el.offsetHeight;a.pad=12+fs*.45;settleUntil=performance.now()+2400;},720);
+  settleUntil=performance.now()+2400;
 }
 function renderThreads(){
-  const tc=threadCounts(); const names=Object.keys(tc).sort((a,b)=>tc[b]-tc[a]||a.localeCompare(b));
-  const max=Math.max(1,...names.map(n=>tc[n]));
-  $('#threads').innerHTML=`<button class="all" data-th="*" style="font-size:14px">All</button>`+names.map(n=>{const sz=13+Math.round(9*Math.sqrt(tc[n]/max));return `<button data-th="${esc(n)}" style="font-size:${sz}px">${esc(n)}<sup>${tc[n]}</sup></button>`;}).join('');
+  const L=live(); const tc=threadCounts(); const names=Object.keys(tc).sort((a,b)=>tc[b]-tc[a]||a.localeCompare(b));
+  const max=Math.max(1,...names.map(n=>tc[n])); const sel=filt.tags;
+  let counts=tc;
+  if(sel.length&&filt.mode==='all'){counts={};names.forEach(n=>{counts[n]=L.filter(t=>sel.every(s=>t.threads.includes(s))&&t.threads.includes(n)).length;});}
+  let hd=`<button class="all" data-list>List</button>`;
+  if(sel.length) hd+=`<span class="mode"><button data-mode="any" class="${filt.mode==='any'?'on':''}">any</button><button data-mode="all" class="${filt.mode==='all'?'on':''}">all</button></span><button class="clr" data-clear>Clear</button>`;
+  $('#threads').innerHTML=hd+names.map(n=>{const sz=13+Math.round(9*Math.sqrt(tc[n]/max));const on=sel.includes(n);const zero=!on&&counts[n]===0;return `<button data-th="${esc(n)}" class="${on?'on':''}${zero?' zero':''}" style="font-size:${sz}px">${esc(n)}<sup>${counts[n]}</sup></button>`;}).join('');
 }
+function toggleTag(n){const i=filt.tags.indexOf(n);if(i<0)filt.tags.push(n);else filt.tags.splice(i,1);layout();}
 
 /* capture */
 const cap=$('#cap'), keep=$('#keep');
@@ -374,15 +433,15 @@ function openFocus(id){
   focus.classList.add('on');
 }
 function renderFm(t){$('#fm').innerHTML=`<b>+${t.pluses||0}</b>${t.threads.map(x=>`<span>${esc(x)}</span>`).join('')}<span>${rel(t.created)}</span>${t.tasks.length?`<span>${t.tasks.filter(x=>x.d).length}/${t.tasks.length} steps</span>`:''}`;}
-function closeFocus(relayout){focus.classList.remove('on');focusId=null;save();if(relayout!==false){layout();if(threadOpen!==null)renderRows();}}
+function closeFocus(relayout){focus.classList.remove('on');focusId=null;save();if(threadOpen!==null)renderRows();if(relayout===true||(relayout!==false&&dirty)){layout();}}
 focus.addEventListener('click',e=>{
   const b=e.target.closest('[data-a]');
   if(!b){ if(!e.target.closest('.fc')) closeFocus(); return; }
   const t=byId(focusId); if(!t) return; const a=b.dataset.a;
-  if(a==='plus'){t.pluses=(t.pluses||0)+1;t.touched=Date.now();renderFm(t);$('#fm b').classList.add('pop');save();setTimeout(()=>closeFocus(),420);}
+  if(a==='plus'){t.pluses=(t.pluses||0)+1;t.touched=Date.now();renderFm(t);$('#fm b').classList.add('pop');save();setTimeout(()=>{closeFocus(false);grow(t.id);},420);}
   else if(a==='open'){closeFocus(false);openThought(t.id);}
-  else if(a==='hold'){t.held=!t.held;$('#fHold').textContent=t.held?'Held':'Hold';$('#fHold').classList.toggle('held',t.held);save();setTimeout(()=>closeFocus(),200);}
-  else if(a==='release'){t.archived=true;t.touched=Date.now();save();toast('Let go');closeFocus();}
+  else if(a==='hold'){t.held=!t.held;$('#fHold').textContent=t.held?'Held':'Hold';$('#fHold').classList.toggle('held',t.held);save();setTimeout(()=>closeFocus(true),200);}
+  else if(a==='release'){t.archived=true;t.touched=Date.now();save();toast('Let go');closeFocus(true);}
 });
 
 /* thread list */
@@ -401,7 +460,13 @@ function renderRows(){
 $('#thClose').addEventListener('click',closeThread);
 $('#lfind').addEventListener('input',e=>{tq=e.target.value.trim().toLowerCase();renderRows();});
 $('#rows').addEventListener('click',e=>{const b=e.target.closest('[data-id]');if(b)openFocus(b.dataset.id);});
-$('#threads').addEventListener('click',e=>{const b=e.target.closest('[data-th]');if(b)openThread(b.dataset.th);});
+$('#threads').addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b) return;
+  if(b.dataset.list!==undefined){openThread('*');return;}
+  if(b.dataset.mode){filt.mode=b.dataset.mode;layout();return;}
+  if(b.dataset.clear!==undefined){filt.tags=[];layout();return;}
+  if(b.dataset.th) toggleTag(b.dataset.th);
+});
 
 /* editor */
 const sheet=$('#sheet'), dt=$('#dt'), db=$('#db');
@@ -442,6 +507,8 @@ $('#gearBtn').addEventListener('click',openSettings);
 $('#setClose').addEventListener('click',closeSettings);
 function setTheme(th){S.theme=th;document.body.dataset.theme=th;document.querySelector('meta[name=theme-color]').content=th==='bone'?'#EEEBE5':'#000000';$$('.set [data-theme]').forEach(b=>b.classList.toggle('off',b.dataset.theme!==th));save();}
 $$('.set [data-theme]').forEach(b=>b.addEventListener('click',()=>setTheme(b.dataset.theme)));
+function setMotion(v){S.motion=!!v;$$('.set [data-motion]').forEach(b=>b.classList.toggle('off',(b.dataset.motion==='1')!==S.motion));save();}
+$$('.set [data-motion]').forEach(b=>b.addEventListener('click',()=>setMotion(b.dataset.motion==='1')));
 $('#bulkGo').addEventListener('click',()=>{
   const lines=$('#bulk').value.split(/\n+/).map(l=>l.trim()).filter(Boolean); if(!lines.length)return;
   let n=0; const base=Date.now();
@@ -455,6 +522,8 @@ function renderReleased(){const R=S.thoughts.filter(t=>t.archived).sort((a,b)=>b
 $('#released').addEventListener('click',e=>{const b=e.target.closest('[data-restore]');if(!b)return;const t=byId(b.dataset.restore);t.archived=false;t.touched=Date.now();save();renderReleased();toast('Back on the surface');});
 
 /* global */
+$('#surface').addEventListener('pointerdown',()=>{paused=true;});
+['pointerup','pointercancel','pointerleave'].forEach(ev=>$('#surface').addEventListener(ev,()=>{paused=false;}));
 $('#surface').addEventListener('click',e=>{
   if(e.target.closest('#resurface')){seed=Math.random();layout();return;}
   const n=e.target.closest('.n[data-id]'); if(n) openFocus(n.dataset.id);
@@ -473,7 +542,7 @@ function migrate(t){ if(t.pluses==null) t.pluses=Math.max(0,((t.weight||2)-2)*2)
   const d=await load(); if(d) S=Object.assign(S,d);
   S.thoughts.forEach(migrate);
   if(!S.seeded){S.thoughts=seedData().concat(S.thoughts);S.seeded=true;save();}
-  setTheme(S.theme||'dark');
+  setTheme(S.theme||'dark'); setMotion(S.motion!==false);
   if(document.fonts&&document.fonts.ready){document.fonts.ready.then(layout);} 
   layout();
 })();
