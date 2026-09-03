@@ -207,7 +207,7 @@ input::placeholder,textarea::placeholder{color:var(--dim)}
 
 <div class="sheet set" id="settings">
   <div class="sh">
-    <div class="shbar"><button id="setClose">Close</button><span class="ttl">Vessel</span></div>
+    <div class="shbar"><button id="setClose">Close</button><span class="ttl">Vessel<i id="ver"></i></span></div>
     <h2>Appearance</h2>
     <div class="opt"><button data-theme="dark">Ink</button><button data-theme="bone">Bone</button></div>
     <div class="fld"><h2>Motion</h2><p>The surface moves very slowly, like water. Turn it off when you need it still.</p><div class="opt"><button data-motion="1">Moving</button><button data-motion="0">Still</button></div></div>
@@ -245,7 +245,7 @@ input::placeholder,textarea::placeholder{color:var(--dim)}
 (function(){
 'use strict';
 const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
-const DAY=86400000, KEY='vessel.v1';
+const DAY=86400000, KEY='vessel.v1', VERSION=9;
 const uid=()=>Math.random().toString(36).slice(2,9)+Date.now().toString(36);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
@@ -529,7 +529,7 @@ $('#bulkGo').addEventListener('click',()=>{
   $('#bulk').value=''; save(); toast(n+' poured in'); closeSettings();
 });
 $('#exportBtn').addEventListener('click',()=>{const blob=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='vessel-'+new Date().toISOString().slice(0,10)+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000);});
-$('#importIn').addEventListener('change',e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(!Array.isArray(d.thoughts))throw 0;const have=new Set(S.thoughts.map(t=>t.id));let n=0;d.thoughts.forEach(t=>{if(!have.has(t.id)){migrate(t);S.thoughts.push(t);n++;}});save();toast(n+' brought in');layout();}catch(err){toast('Not a Vessel export');}};r.readAsText(f);e.target.value='';});
+$('#importIn').addEventListener('change',e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(!Array.isArray(d.thoughts))throw 0;const have=new Set(S.thoughts.map(t=>t.id));let n=0;d.thoughts.forEach(t=>{if(t.sample)return;if(!have.has(t.id)){migrate(t);S.thoughts.push(t);n++;}});save();toast(n+' brought in');layout();}catch(err){toast('Not a Vessel export');}};r.readAsText(f);e.target.value='';});
 function renderReleased(){const R=S.thoughts.filter(t=>t.archived).sort((a,b)=>b.touched-a.touched);$('#released').innerHTML=R.length?R.map(t=>`<div><span>${esc(t.text)}</span><button data-restore="${t.id}">Bring back</button></div>`).join(''):`<p>Nothing released.</p>`;}
 $('#released').addEventListener('click',e=>{const b=e.target.closest('[data-restore]');if(!b)return;const t=byId(b.dataset.restore);t.archived=false;t.touched=Date.now();save();renderReleased();toast('Back on the surface');});
 
@@ -552,8 +552,8 @@ function migrate(t){ if(t.pluses==null) t.pluses=Math.max(0,((t.weight||2)-2)*2)
 /* boot */
 (async function(){
   const d=await load(); if(d) S=Object.assign(S,d);
-  S.thoughts.forEach(migrate);
-  setTheme(S.theme||'dark'); setMotion(S.motion!==false);
+  S.thoughts=S.thoughts.filter(t=>!t.sample); S.thoughts.forEach(migrate);
+  setTheme(S.theme||'dark'); setMotion(S.motion!==false); $('#ver').textContent='build '+VERSION;
   if(document.fonts&&document.fonts.ready){document.fonts.ready.then(layout);} 
   layout();
 })();
