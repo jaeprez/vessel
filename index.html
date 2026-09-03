@@ -56,6 +56,7 @@ input::placeholder,textarea::placeholder{color:var(--dim)}
 .n.arrive{animation:arrive 1.9s cubic-bezier(.16,.6,.2,1) both}
 .n.fade{animation:arrive .9s ease both}
 .sempty{pointer-events:none}
+.sempty[hidden]{display:none}
 .n.heavy{font-weight:500;letter-spacing:-.02em}
 .n.held::before{content:"";display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--ink);margin:0 .5em 0 0;vertical-align:.32em}
 .n.measure{visibility:hidden;left:0;top:0;animation:none}
@@ -219,7 +220,7 @@ input::placeholder,textarea::placeholder{color:var(--dim)}
     <div class="fld">
       <h2>Carry it between devices</h2>
       <p>This file keeps its own memory on whichever device opens it. Export here, import there.</p>
-      <div class="opt"><button id="exportBtn">Export</button><label>Import <input type="file" id="importIn" accept="application/json" hidden></label><button class="quiet" id="clearSamples">Remove the examples</button></div>
+      <div class="opt"><button id="exportBtn">Export</button><label>Import <input type="file" id="importIn" accept="application/json" hidden></label></div>
     </div>
     <div class="fld">
       <h2>Let go</h2>
@@ -261,28 +262,6 @@ async function load(){
 }
 let saveT=null;
 function save(){ clearTimeout(saveT); saveT=setTimeout(async()=>{ const s=JSON.stringify(S); try{localStorage.setItem(KEY,s);}catch(e){} try{ if(window.storage) await window.storage.set(KEY,s,false);}catch(e){} },150); }
-
-/* seed */
-function seedData(){
-  const now=Date.now();
-  const mk=(text,pluses,threads,ago,extra)=>Object.assign({id:uid(),text,body:'',pluses,threads,tasks:[],created:now-ago,touched:now-ago,held:false,archived:false,sample:true},extra||{});
-  return [
-    mk('One vessel. Every thought goes here or it doesn\u2019t exist.',6,['vessel'],DAY*2,{held:true,tasks:[{t:'Dump the iOS notes',d:false},{t:'Dump Notion',d:false},{t:'Screenshots and saved posts',d:false}]}),
-    mk('Simplicity is earned, not chosen.',9,['design'],DAY*20,{held:true,body:'The houses that last never shout. The item carries the message; the frame disappears.'}),
-    mk('Export the stems before the plugins stop opening.',3,['music'],DAY*6),
-    mk('Rain at 2am, everything off. This is the tempo the next instrumental should sit at.',2,['music','inspiration'],DAY*1.1),
-    mk('Character creation is the whole game. Build the product like that.',4,['business','design'],DAY*15),
-    mk('Sample packs sold as lookbooks, not lists.',1,['business','music'],DAY*3.1),
-    mk('A statue is finished when nothing more can be removed.',2,['design'],DAY*9),
-    mk('check the sample rate on the drum loop',0,['music'],DAY*.3),
-    mk('burnt amber, slate, bone',0,['inspiration'],DAY*.6),
-    mk('gate the reverb tail on the snare',0,['music'],DAY*.1),
-    mk('Weekly review on the off day. Wednesday is the quiet one.',1,['routine'],DAY*12),
-    mk('petrichor: the smell of rain has a name',0,['inspiration'],DAY*30),
-    mk('ask about the bus pass before the month rolls',0,[],DAY*40),
-    mk('what would this look like with nothing on it',0,['design'],DAY*25)
-  ];
-}
 
 /* helpers */
 function parse(raw){
@@ -551,7 +530,6 @@ $('#bulkGo').addEventListener('click',()=>{
 });
 $('#exportBtn').addEventListener('click',()=>{const blob=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='vessel-'+new Date().toISOString().slice(0,10)+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000);});
 $('#importIn').addEventListener('change',e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(!Array.isArray(d.thoughts))throw 0;const have=new Set(S.thoughts.map(t=>t.id));let n=0;d.thoughts.forEach(t=>{if(!have.has(t.id)){migrate(t);S.thoughts.push(t);n++;}});save();toast(n+' brought in');layout();}catch(err){toast('Not a Vessel export');}};r.readAsText(f);e.target.value='';});
-$('#clearSamples').addEventListener('click',()=>{const n=S.thoughts.filter(t=>t.sample).length;S.thoughts=S.thoughts.filter(t=>!t.sample);save();toast(n?'Examples removed':'No examples left');update();});
 function renderReleased(){const R=S.thoughts.filter(t=>t.archived).sort((a,b)=>b.touched-a.touched);$('#released').innerHTML=R.length?R.map(t=>`<div><span>${esc(t.text)}</span><button data-restore="${t.id}">Bring back</button></div>`).join(''):`<p>Nothing released.</p>`;}
 $('#released').addEventListener('click',e=>{const b=e.target.closest('[data-restore]');if(!b)return;const t=byId(b.dataset.restore);t.archived=false;t.touched=Date.now();save();renderReleased();toast('Back on the surface');});
 
@@ -575,7 +553,6 @@ function migrate(t){ if(t.pluses==null) t.pluses=Math.max(0,((t.weight||2)-2)*2)
 (async function(){
   const d=await load(); if(d) S=Object.assign(S,d);
   S.thoughts.forEach(migrate);
-  if(!S.seeded){S.thoughts=seedData().concat(S.thoughts);S.seeded=true;save();}
   setTheme(S.theme||'dark'); setMotion(S.motion!==false);
   if(document.fonts&&document.fonts.ready){document.fonts.ready.then(layout);} 
   layout();
